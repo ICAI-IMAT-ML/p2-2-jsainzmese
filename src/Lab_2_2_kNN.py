@@ -79,7 +79,14 @@ class knn:
         Returns:
             np.ndarray: Predicted class labels.
         """
-        if X = 
+        pred = []
+        for x in X:
+            distances = self.compute_distances(x)
+            idxs = self.get_k_nearest_neighbors(distances)
+            labels = self.y_train[idxs]
+            label_predicha = self.most_common_label(labels)
+            pred.append(label_predicha)
+        return pred
         
 
     def predict_proba(self, X: np.ndarray)-> np.ndarray:
@@ -95,10 +102,20 @@ class knn:
         Returns:
             np.ndarray: Predicted class probabilities.
         """
-        y_pred_prob = []
-        valores, frecuencias = np.unique(X,return_counts = True)
-        for x,frec in valores, frecuencias:
-            y_pred_prob.append(frecuencias/self.k)
+        pred_prob = []
+        for i in range(len(X)):
+            indices = self.get_k_nearest_neighbors(self.compute_distances(X[i]))
+            cont_clase_1 = 0
+            cont_clase_0 = 0
+            for indice in indices:
+                if self.y_train[indice] == 1:
+                    cont_clase_1 += 1
+                else:
+                    cont_clase_0 += 1
+            pred_prob.append([cont_clase_1 / self.k, cont_clase_0 / self.k])
+        return np.array(pred_prob)
+    
+
 
 
 
@@ -112,7 +129,12 @@ class knn:
         Returns:
             np.ndarray: distance from point to each point in the training dataset.
         """
-        for x,y in self.x_train, self.y_train:
+        distancias = []
+        for punto in self.x_train:
+                if len(punto) == len(point):
+                    distancias.append(minkowski_distance(punto,point))
+        return distancias
+        
            
     def get_k_nearest_neighbors(self, distances: np.ndarray) -> np.ndarray:
         """Get the k nearest neighbors indices given the distances matrix from a point.
@@ -126,7 +148,9 @@ class knn:
         Hint:
             You might want to check the np.argsort function.
         """
-        
+        return np.argsort(distances)[:self.k]
+
+            
 
     def most_common_label(self, knn_labels: np.ndarray) -> int:
         """Obtain the most common label from the labels of the k nearest neighbors
@@ -252,16 +276,28 @@ def evaluate_classification_metrics(y_true, y_pred, positive_label):
     accuracy = (tp + tn) / (tp + tn + fp + fn)
 
     # Precision
-    precision = tp / (tp + fp)
+    if tp + fp ==0:
+        precision = 0
+    else: 
+        precision = tp / (tp + fp)
 
     # Recall (Sensitivity)
-    recall = tp / (tp + fn)
+    if tp + fn == 0:
+        recall = 0
+    else:
+        recall = tp / (tp + fn)
 
     # Specificity
-    specificity = tn / (tn + fp)
+    if tn + fp == 0:
+        specificity = 0
+    else: 
+        specificity = tn / (tn + fp)
 
     # F1 Score
-    f1 = 2 * (precision * recall) / (precision + recall)
+    if precision + recall == 0:
+        f1 = 0
+    else:
+        f1 = 2 * (precision * recall) / (precision + recall)
 
     return {
         "Confusion Matrix": [tn, fp, fn, tp],
@@ -297,7 +333,27 @@ def plot_calibration_curve(y_true, y_probs, positive_label, n_bins=10):
             - "true_proportions": Array of the fraction of positives in each bin
 
     """
-    # TODO
+    y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
+
+    bin_centers = []
+    for i in range(n_bins):
+        centro = (i / n_bins) + (1 / (2 * n_bins))
+        bin_centers.append(centro)
+
+    true_proportions = []
+    for centro in bin_centers:
+        cont = 0
+        cont_clase_1 = 0
+        for i in range(len(y_probs)):
+            if centro - (1 / (2 * n_bins)) <= y_probs[i] < centro + (1 / (2 * n_bins)):
+                if y_true_mapped[i] == 1:
+                    cont_clase_1 += 1
+                cont += 1
+        if cont != 0:
+            true_proportions.append(cont_clase_1 / cont)
+        else:
+            true_proportions.append(1)
+
     return {"bin_centers": bin_centers, "true_proportions": true_proportions}
 
 
@@ -327,7 +383,7 @@ def plot_probability_histograms(y_true, y_probs, positive_label, n_bins=10):
                 Array of predicted probabilities for the negative class.
 
     """
-    # TODO
+    y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
 
     return {
         "array_passed_to_histogram_of_positive_class": y_probs[y_true_mapped == 1],
@@ -357,5 +413,29 @@ def plot_roc_curve(y_true, y_probs, positive_label):
             - "tpr": Array of True Positive Rates for each threshold.
 
     """
-    # TODO
+    y_pred = []
+        
+    fpr = []
+    tpr = []
+    thresholds = np.linspace(0, 1, 11)
+    for threshold in thresholds:
+        #Utilizamos el threshold(umbral) para clasificar un punto en la clase positiva o negativa
+        y_pred = (y_probs >= threshold).astype(int) 
+        tp = np.sum((y_true == positive_label) & (y_pred == positive_label))
+        fp = np.sum((y_true != positive_label) & (y_pred == positive_label))
+        tn = np.sum((y_true != positive_label) & (y_pred != positive_label))
+        fn = np.sum((y_true == positive_label) & (y_pred != positive_label))
+        if (tp + fn) != 0: 
+            tpr.append(tp / (tp + fn))
+        else:
+            tpr.append(1)
+        if (fp + tn) != 0:
+            fpr.append(fp / (fp + tn)) 
+        else:
+            fpr.append(0)
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, label='ROC Curve', color='blue')
+    plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
     return {"fpr": np.array(fpr), "tpr": np.array(tpr)}

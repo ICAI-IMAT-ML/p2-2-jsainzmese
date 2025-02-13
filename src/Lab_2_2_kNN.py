@@ -18,8 +18,11 @@ def minkowski_distance(a, b, p=2):
     Returns:
         float: Minkowski distance between arrays a and b.
     """
-
-    # TODO
+    dist = 0
+    for i in range(len(a)):
+        dist += abs(a[i]-b[i])**p
+    dist = (dist)**(1/p)
+    return dist
 
 
 # k-Nearest Neighbors Model
@@ -50,7 +53,21 @@ class knn:
             k (int, optional): Number of neighbors to use. Defaults to 5.
             p (int, optional): The degree of the Minkowski distance. Defaults to 2.
         """
-        # TODO
+        if (type(p) == int and p > 0): 
+            self.p = p
+        else:
+            raise ValueError("k and p must be positive integers.")
+
+        if(type(k)==int and k > 0):
+            self.k = k
+        else:
+            raise ValueError("k and p must be positive integers.")
+        
+        if (len(X_train)==len(y_train)):
+            self.x_train = X_train
+            self.y_train = y_train
+        else:
+            raise ValueError("Length of X_train and y_train must be equal.")
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -62,9 +79,10 @@ class knn:
         Returns:
             np.ndarray: Predicted class labels.
         """
-        # TODO
+        if X = 
+        
 
-    def predict_proba(self, X):
+    def predict_proba(self, X: np.ndarray)-> np.ndarray:
         """
         Predict the class probabilities for the provided data.
 
@@ -77,7 +95,13 @@ class knn:
         Returns:
             np.ndarray: Predicted class probabilities.
         """
-        # TODO
+        y_pred_prob = []
+        valores, frecuencias = np.unique(X,return_counts = True)
+        for x,frec in valores, frecuencias:
+            y_pred_prob.append(frecuencias/self.k)
+
+
+
 
     def compute_distances(self, point: np.ndarray) -> np.ndarray:
         """Compute distance from a point to every point in the training dataset
@@ -88,8 +112,8 @@ class knn:
         Returns:
             np.ndarray: distance from point to each point in the training dataset.
         """
-        # TODO
-
+        for x,y in self.x_train, self.y_train:
+           
     def get_k_nearest_neighbors(self, distances: np.ndarray) -> np.ndarray:
         """Get the k nearest neighbors indices given the distances matrix from a point.
 
@@ -102,7 +126,7 @@ class knn:
         Hint:
             You might want to check the np.argsort function.
         """
-        # TODO
+        
 
     def most_common_label(self, knn_labels: np.ndarray) -> int:
         """Obtain the most common label from the labels of the k nearest neighbors
@@ -113,7 +137,8 @@ class knn:
         Returns:
             int: most common label
         """
-        # TODO
+        valores, frec = np.unique(knn_labels, return_counts=True)
+        return valores[np.argmax(frec)]
 
     def __str__(self):
         """
@@ -218,22 +243,25 @@ def evaluate_classification_metrics(y_true, y_pred, positive_label):
     y_pred_mapped = np.array([1 if label == positive_label else 0 for label in y_pred])
 
     # Confusion Matrix
-    # TODO
+    tn = np.sum((y_true_mapped==0) & (y_pred_mapped == 0))
+    fp = np.sum((y_true_mapped==0) & (y_pred_mapped == 1))
+    fn = np.sum((y_true_mapped==1) & (y_pred_mapped == 0))
+    tp = np.sum((y_true_mapped==1) & (y_pred_mapped == 1))
 
     # Accuracy
-    # TODO
+    accuracy = (tp + tn) / (tp + tn + fp + fn)
 
     # Precision
-    # TODO
+    precision = tp / (tp + fp)
 
     # Recall (Sensitivity)
-    # TODO
+    recall = tp / (tp + fn)
 
     # Specificity
-    # TODO
+    specificity = tn / (tn + fp)
 
     # F1 Score
-    # TODO
+    f1 = 2 * (precision * recall) / (precision + recall)
 
     return {
         "Confusion Matrix": [tn, fp, fn, tp],
